@@ -1,0 +1,29 @@
+name: Mirror to CodeCommit
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::533431643556:role/github-actions-codecommit-poc
+          aws-region: ap-northeast-1
+
+      - name: Push to CodeCommit
+        run: |
+          git remote add codecommit https://git-codecommit.ap-northeast-1.amazonaws.com/v1/repos/mirror-test
+          git config --global credential.helper '!aws codecommit credential-helper $@'
+          git config --global credential.UseHttpPath true
+          git push codecommit main --force
